@@ -1,0 +1,21 @@
+[package]
+name = "client_rs"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.102"
+async-process = "2.5.0"
+dirs = "6.0.0"
+features = "0.10.0"
+futures-lite = "2.6.1"
+lighty-launcher = "26.5.12"
+slint = "1.17.0"
+tokio = { version = "1.52.3", features = ["rt-multi-thread", "macros"] }
+
+[build-dependencies]
+slint-build = "1.17.0"
+
+[profile.release]
+codegen-units = 1
+lto = true
