@@ -1,12 +1,7 @@
 use std::{
     path::PathBuf,
-    process::{Stdio},
-    thread,
 };
-
-use async_process::Command;
-use futures_lite::{AsyncBufReadExt, StreamExt, io::BufReader};
-use li
+use lighty_launcher::{Authenticator, Launch, Loader, core::AppState, version};
 fn get_minecraft_dir() -> PathBuf {
     if let Some(dir) = dirs::config_dir() {
         dir.join(".minecraft")
@@ -17,26 +12,19 @@ fn get_minecraft_dir() -> PathBuf {
 
 async fn init_launcher() -> anyhow::Result<()> {
     println!("init");
+    AppState::init("launcher")?;
+    let minecraft_dir = get_minecraft_dir().display().to_string();
 
-    let minecraft_dir = get_minecraft_dir();
+    let mut auth = lighty_launcher::auth::OfflineAuth::new("zzz");
+    let profile = auth.authenticate().await?;
+    let mut version = version::VersionBuilder::new("zzz", Loader::Vanilla, "", "1.21.11");
+    version.launch(&profile, lighty_launcher::JavaDistribution::Temurin).run().await?;
 
-    let mut auth = 
-    // let mut child = Command::new(&command.executable)
-    //     .args(&command.args)
-    //     .current_dir(&command.working_dir)
-    //     .stdout(Stdio::piped())
-    //     .spawn()?;
-
-    // let mut lines = BufReader::new(child.stdout.take().unwrap()).lines();
-
-    // while let Some(line) = lines.next().await {
-    //     println!("{}", line?)
-    // }
     Ok(())
 }
 
 pub async fn launcher_thread() {
-    tokio::spawn(async {
-        init_launcher()
+    _=tokio::spawn(async {
+        _=init_launcher().await;
     }).await;
 }
