@@ -333,6 +333,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "async-compat"
+version = "0.2.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a1ba85bc55464dcbf728b56d97e119d673f4cf9062be330a9a26f3acf504a590"
+dependencies = [
+ "futures-core",
+ "futures-io",
+ "once_cell",
+ "pin-project-lite",
+ "tokio",
+]
+
+[[package]]
 name = "async-compression"
 version = "0.4.42"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -930,8 +943,10 @@ name = "client_rs"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-compat",
  "dirs",
  "lighty-launcher",
+ "parking_lot",
  "slint",
  "slint-build",
  "tokio",
@@ -3151,6 +3166,7 @@ checksum = "7e660d51b6669bb6ce7c64d5e1310f0a39f02f0d1957072c154502ac14fadde1"
 dependencies = [
  "base64",
  "lighty-core",
+ "lighty-event",
  "reqwest",
  "secrecy",
  "serde",
@@ -3171,6 +3187,7 @@ dependencies = [
  "fastrand",
  "futures-util",
  "hex",
+ "lighty-event",
  "once_cell",
  "os_info",
  "path-absolutize",
@@ -3187,12 +3204,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "lighty-event"
+version = "26.5.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "68f3e89f09f46147626976a7310085c35dcb5d15496ad59d92e047d114cb8d87"
+dependencies = [
+ "once_cell",
+ "serde",
+ "thiserror 2.0.18",
+ "tokio",
+]
+
+[[package]]
 name = "lighty-java"
 version = "26.5.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6ca2843f982b891f2b4a2234bc72385807290e51098c0379f4ddedb0d897580f"
 dependencies = [
  "lighty-core",
+ "lighty-event",
  "path-absolutize",
  "serde",
  "thiserror 2.0.18",
@@ -3213,6 +3243,7 @@ dependencies = [
  "hex",
  "lighty-auth",
  "lighty-core",
+ "lighty-event",
  "lighty-java",
  "lighty-loaders",
  "lighty-modsloader",
@@ -3239,6 +3270,7 @@ checksum = "8a53fb0a1039a4d638f158196bebb793774752475adacf6d23d4fd30d0b2809c"
 dependencies = [
  "lighty-auth",
  "lighty-core",
+ "lighty-event",
  "lighty-java",
  "lighty-launch",
  "lighty-loaders",
@@ -3278,6 +3310,7 @@ dependencies = [
  "async-trait",
  "futures",
  "lighty-core",
+ "lighty-event",
  "lighty-loaders",
  "once_cell",
  "reqwest",
@@ -3350,6 +3383,15 @@ name = "litemap"
 version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "92daf443525c4cce67b150400bc2316076100ce0b3686209eb8cf3c31612e6f0"
+
+[[package]]
+name = "lock_api"
+version = "0.4.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "224399e74b87b5f3557511d98dff8b14089b3dadafcab6bb93eab67d3aace965"
+dependencies = [
+ "scopeguard",
+]
 
 [[package]]
 name = "log"
@@ -4161,6 +4203,29 @@ name = "parking"
 version = "2.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f38d5652c16fde515bb1ecef450ab0f6a219d619a7274976324d5e377f7dceba"
+
+[[package]]
+name = "parking_lot"
+version = "0.12.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "93857453250e3077bd71ff98b6a65ea6621a19bb0f559a85248955ac12c45a1a"
+dependencies = [
+ "lock_api",
+ "parking_lot_core",
+]
+
+[[package]]
+name = "parking_lot_core"
+version = "0.9.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2621685985a2ebf1c516881c026032ac7deafcda1a2c9b7850dc81e3dfcb64c1"
+dependencies = [
+ "cfg-if",
+ "libc",
+ "redox_syscall 0.5.18",
+ "smallvec",
+ "windows-link 0.2.1",
+]
 
 [[package]]
 name = "parlance"

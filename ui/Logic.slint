@@ -1,0 +1,15 @@
+export enum Loader {Vanilla, Fabric, Forge, Optifine, NeoForge, Quilt}
+
+export struct InstanceS {
+    name: string,
+    version: string,
+    loader-version: string,
+    loader: Loader,    
+    is_run: bool,
+}
+
+export global Logic {
+    in-out property <[InstanceS]> instances;
+
+    callback run-instance(InstanceS);
+}

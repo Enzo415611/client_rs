@@ -1,18 +1,16 @@
-import { Button, VerticalBox } from "std-widgets.slint";
+import { Button, VerticalBox, ProgressIndicator } from "std-widgets.slint";
+import { SelectInstancePage } from "select-instance.slint";
+import { Logic, InstanceS } from "Logic.slint"; export { Logic, InstanceS}
+
 
 export component AppWindow inherits Window {
-    in-out property <int> counter: 42;
-    callback request-increase-value();
-    VerticalBox {
-        Text {
-            text: "Counter: \{root.counter}";
-        }
+    preferred-width: 100px;
+    preferred-height: 800px;
+    min-width: 100px;
+    min-height: 800px;
 
-        Button {
-            text: "Increase value";
-            clicked => {
-                root.request-increase-value();
-            }
-        }
+    HorizontalLayout {
+        SelectInstancePage { }
+        VerticalLayout { }
     }
 }

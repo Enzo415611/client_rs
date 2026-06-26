@@ -1,0 +1,52 @@
+import { TabWidget, HorizontalBox } from "std-widgets.slint";
+import { Logic, InstanceS, Loader } from "../Logic.slint";
+
+export component SelectInstanceButton {
+    in-out property <InstanceS> instance;
+
+    function loader-to-string() -> string {
+        if instance.loader == Loader.Vanilla {
+            "Vanilla"
+        } else if instance.loader == Loader.Fabric {
+            "Fabric"
+        } else if instance.loader == Loader.Optifine {
+            "Optifine"
+        } else if instance.loader == Loader.NeoForge {
+            "NeoForge"
+        } else if instance.loader == Loader.Quilt {
+            "Quilt"
+        } else {
+            "Vanilla"
+        }
+    }
+    
+    Rectangle {
+        border-color: aliceblue;
+        border-width: 0.8px;
+        border-radius: 7px;
+
+        HorizontalBox {
+            vertical-stretch: 1.0;
+            horizontal-stretch: 1.0;
+            alignment: LayoutAlignment.center;
+
+            Text {
+                text: instance.name + "\n" + "Version: " +  instance.version + "\n" + "Loader: " + loader-to-string();
+                font-size: 18px;
+                horizontal-alignment: TextHorizontalAlignment.center;
+            }
+        
+            Image {
+                source: instance.is-run ? @image-url("../image/pause-circle.png") : @image-url("../image/play-circle.png");
+                horizontal-alignment: ImageHorizontalAlignment.center;
+            }
+        }
+
+        TouchArea {
+            clicked => {
+                Logic.run-instance(instance);
+                instance.is-run = instance.is-run ? false : true;
+            }
+        }
+    }
+}
