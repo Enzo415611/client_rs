@@ -1,30 +1,41 @@
-use std::{
-    path::PathBuf,
+use lighty_launcher::{
+    Authenticator, Launch, Loader,
+    core::{AppState},
+    version,
 };
-use lighty_launcher::{Authenticator, Launch, Loader, core::AppState, version};
-fn get_minecraft_dir() -> PathBuf {
-    if let Some(dir) = dirs::config_dir() {
-        dir.join(".minecraft")
-    } else {
-        PathBuf::new()
+use std::{env::consts::OS, path::PathBuf};
+
+pub fn get_minecraft_dir() -> PathBuf {
+    match OS {
+        "windows" => {
+            if let Some(dir) = dirs::config_dir() {
+                return dir.join(".minecraft");
+            }
+            PathBuf::new()
+        }
+        "macos" => PathBuf::new(),
+        "linux" => {
+            if let Some(dir) = dirs::data_dir() {
+                return dir.join(".minecraft");
+            }
+            PathBuf::new()
+        }
+        _ => PathBuf::new(),
     }
 }
 
-async fn init_launcher() -> anyhow::Result<()> {
-    println!("init");
-    AppState::init("launcher")?;
-    let minecraft_dir = get_minecraft_dir().display().to_string();
-
+pub async fn init_launcher() -> anyhow::Result<()> {
+    println!("init minecraft");
+    
+    AppState::init(".minecraft")?;
     let mut auth = lighty_launcher::auth::OfflineAuth::new("zzz");
     let profile = auth.authenticate().await?;
-    let mut version = version::VersionBuilder::new("zzz", Loader::Vanilla, "", "1.21.11");
-    version.launch(&profile, lighty_launcher::JavaDistribution::Temurin).run().await?;
+    let mut version = version::VersionBuilder::new("my-instance", Loader::Vanilla, "", "1.21.11");
+
+    version
+        .launch(&profile, lighty_launcher::JavaDistribution::Temurin)
+        .run()
+        .await?;
 
     Ok(())
-}
-
-pub async fn launcher_thread() {
-    _=tokio::spawn(async {
-        _=init_launcher().await;
-    }).await;
 }
