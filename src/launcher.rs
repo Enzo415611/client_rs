@@ -1,3 +1,4 @@
+use lighty_launcher::auth::{self, MicrosoftAuth, OfflineAuth};
 use lighty_launcher::launch::InstanceControl;
 use lighty_launcher::{Authenticator, Launch, Loader, event::EventBus, version};
 
@@ -7,8 +8,9 @@ use slint::{
 };
 use std::{env::consts::OS, path::PathBuf, sync::Arc};
 
-use crate::slint_generatedAppWindow::LoaderS;
-use crate::{AppState, AppWindow, Instance, Logic, NewInstance};
+use crate::{
+    AppState, AppWindow, Instance, InstanceS, LoaderS, Logic, ProfileSelectedS, SimpleInstance,
+};
 
 fn to_slint_loader_enum(loader: &Loader) -> LoaderS {
     match loader {
@@ -41,15 +43,48 @@ pub fn get_minecraft_dir() -> PathBuf {
     }
 }
 
-async fn create_instance(
+async fn auth(
+    app_state: Arc<Mutex<AppState>>,
+    weak: Weak<AppWindow>,
+) -> Result<MicrosoftAuth, OfflineAuth> {
+    slint::spawn_local(async_compat::Compat::new(async move {
+        if let Some(ui) = weak.upgrade() {
+            let logic = ui.global::<Logic>();
+
+            match logic.get_profile_mod_selected() {
+                ProfileSelectedS::Online => {
+                    let mut auth = auth::MicrosoftAuth::new("");
+
+                    if let Ok(user) = auth.authenticate(None).await {
+                        app_state.lock().current_profile = Some(user);
+                    }
+
+                    app_state.lock().current_profil_type = crate::ProfileEnum::Online;
+                }
+                ProfileSelectedS::Offline => {
+                    let mut auth =
+                        auth::OfflineAuth::new(logic.get_offline_profile_name().to_string());
+                    if let Ok(user) = auth.authenticate(None).await {
+                        app_state.lock().current_profile = Some(user);
+                    }
+
+                    app_state.lock().current_profil_type = crate::ProfileEnum::Offline;
+                }
+            }
+        }
+    }))
+    .ok();
+
+    todo!()
+}
+
+pub fn create_instance(
     weak: Weak<AppWindow>,
     app_state: Arc<Mutex<AppState>>,
-    new_instance: NewInstance,
+    new_instance: SimpleInstance,
 ) -> anyhow::Result<()> {
-    println!("init instance");
-    let event_bus = EventBus::new(1000);
-    let mut rx = event_bus.subscribe();
-    lighty_launcher::_core::AppState::init(".minecraft")?;
+    // let event_bus = EventBus::new(1000);
+    // let mut rx = event_bus.subscribe();
 
     let instance = version::VersionBuilder::new(
         &new_instance.name,
@@ -61,19 +96,14 @@ async fn create_instance(
     if let Some(ui) = weak.upgrade() {
         let logic = ui.global::<Logic>();
 
-        let mut instances_vec = vec![];
-
-        _ = logic.get_instances().iter().map(|i| instances_vec.push(i));
-
-        instances_vec.push(crate::InstanceS {
+        app_state.lock().instances_for_slint.push(InstanceS {
             name: SharedString::from(new_instance.name),
             version: SharedString::from(new_instance.version),
             loader: to_slint_loader_enum(&new_instance.loader),
             loader_version: SharedString::from(new_instance.loader_version),
             is_run: false,
         });
-
-        logic.set_instances(ModelRc::new(VecModel::from(instances_vec)));
+        logic.set_instances(ModelRc::new(VecModel::from(app_state.lock().instances_for_slint.clone())));
     }
 
     app_state.lock().instances.push(Instance {
@@ -81,54 +111,40 @@ async fn create_instance(
         is_run: false,
     });
 
-    slint::spawn_local(async_compat::Compat::new(async move {
-        let app_state = app_state.clone();
-        while let Ok(event) = rx.next().await {
-            match event {
-                lighty_launcher::event::Event::Launch(
-                    lighty_launcher::event::LaunchEvent::InstallProgress { bytes },
-                ) => {
-                    // progresso ao baixar os arquivos do jogo
-                    println!("   +{}", bytes);
-                }
-                lighty_launcher::event::Event::ConsoleOutput(out) => {
-                    // log do jogo ao inicar e ao sair
+    // slint::spawn_local(async_compat::Compat::new(async move {
+    //     let _app_state = app_state.clone();
+    //     while let Ok(event) = rx.next().await {
+    //         match event {
+    //             lighty_launcher::event::Event::Launch(
+    //                 lighty_launcher::event::LaunchEvent::InstallProgress { bytes },
+    //             ) => {
+    //                 // progresso ao baixar os arquivos do jogo
+    //                 println!("   +{}", bytes);
+    //             }
+    //             lighty_launcher::event::Event::ConsoleOutput(out) => {
+    //                 // log do jogo ao inicar e ao sair
 
-                    println!("{}", out.line)
-                }
-                lighty_launcher::event::Event::Launch(
-                    lighty_launcher::event::LaunchEvent::Launched { version, pid },
-                ) => {}
-                _ => {}
-            }
-        }
-    }))
-    .ok();
-
-    // instance
-    //     .launch(&profile, lighty_launcher::JavaDistribution::Temurin)
-    //     .with_event_bus(&event_bus)
-    //     .run()
-    //     .await?;
+    //                 println!("{}", out.line)
+    //             }
+    //             lighty_launcher::event::Event::Launch(
+    //                 lighty_launcher::event::LaunchEvent::Launched { version, pid },
+    //             ) => {}
+    //             _ => {}
+    //         }
+    //     }
+    // }))
+    // .ok();
 
     Ok(())
 }
 
-pub fn new_instance_thread(
-    weak: Weak<AppWindow>,
-    app_state: Arc<Mutex<AppState>>,
-    new_instance: NewInstance,
-) {
-    slint::spawn_local(async_compat::Compat::new(create_instance(
-        weak,
-        app_state,
-        new_instance,
-    )))
-    .ok();
-}
-
 fn get_instance_by_name(app_state: Arc<Mutex<AppState>>, name: &str) -> Option<Instance> {
-    app_state.lock().instances.iter().find(|i| i.version_builder.name == name.to_string()).cloned()
+    app_state
+        .lock()
+        .instances
+        .iter()
+        .find(|i| i.version_builder.name == name.to_string())
+        .cloned()
 }
 
 fn on_run_instance(weak: Weak<AppWindow>, app_state: Arc<Mutex<AppState>>) {
@@ -136,8 +152,18 @@ fn on_run_instance(weak: Weak<AppWindow>, app_state: Arc<Mutex<AppState>>) {
         let logic = ui.global::<Logic>();
 
         logic.on_run_instance(move |name| {
-            if let Some(instance) = get_instance_by_name(app_state.clone(), &name) {
-                
+            if let Some(mut instance) = get_instance_by_name(app_state.clone(), &name) {
+                let app_state = app_state.clone();
+                slint::spawn_local(async_compat::Compat::new(async move {
+                    if let Some(user) = &app_state.lock().current_profile {
+                        _ = instance
+                            .version_builder
+                            .launch(user, lighty_launcher::JavaDistribution::Temurin)
+                            .run()
+                            .await;
+                    }
+                }))
+                .ok();
             }
         });
     }

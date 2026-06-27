@@ -1,6 +1,7 @@
 import { Button, VerticalBox, ProgressIndicator } from "std-widgets.slint";
 import { SelectInstancePage } from "select-instance.slint";
-import { Logic, InstanceS, LoaderS } from "Logic.slint"; export { Logic, InstanceS, LoaderS}
+import { Logic, InstanceS, LoaderS, ProfileSelectedS } from "Logic.slint"; export { Logic, InstanceS, LoaderS, ProfileSelectedS}
+import { CreateInstance } from "create-instance.slint";
 
 
 export component AppWindow inherits Window {
@@ -11,6 +12,8 @@ export component AppWindow inherits Window {
 
     HorizontalLayout {
         SelectInstancePage { }
-        VerticalLayout { }
+        VerticalLayout {
+            CreateInstance {}
+        }
     }
 }

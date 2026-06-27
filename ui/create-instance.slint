@@ -1,9 +1,29 @@
 import { LoaderS, Logic, InstanceS } from "Logic.slint";
-import { ComboBox, Button, TextEdit } from "std-widgets.slint";
+import { ComboBox, Button, TextEdit, HorizontalBox, LineEdit, VerticalBox } from "std-widgets.slint";
+
+export struct MinecraftVersion {
+    
+}
 
 export component CreateInstance {
     in-out property <InstanceS> instance;
-    
+    in-out property <[string]> minecraft-versions: [
+        "26.1",
+        "1.21.11",
+        "1.21.10",
+        "1.21.9",
+        "1.21.8",
+        "1.21.7",
+        "1.21.6",
+        "1.21.5",
+        "1.21.4",
+        "1.21.3",
+        "1.21.2",
+        "1.21.1",
+        "1.21"
+    ];
+
+
     function loader-to-string(loader: LoaderS) -> string {
         if loader == LoaderS.Vanilla {
             "Vanilla"
@@ -40,15 +60,23 @@ export component CreateInstance {
         }
     }
 
-    VerticalLayout {
-        TextInput {
-            single-line: true;
+    VerticalBox {
+        alignment: LayoutAlignment.center;
+        
+        LineEdit {
+            height: 30px;
+            placeholder-text: "Instance Name";
             text: instance.name;
+            edited(text) => {
+                instance.name = text;
+            }
         }
-
-        TextInput {
-            single-line: true;
-            text: instance.version;
+        
+        ComboBox {
+            model: minecraft-versions;
+            selected(current-value) => {
+                instance.version = current-value;
+            }
         }
 
         ComboBox {
@@ -60,22 +88,27 @@ export component CreateInstance {
                 loader-to-string(LoaderS.NeoForge),
                 loader-to-string(LoaderS.Quilt)
             ];
-            current-value: loader-to-string(LoaderS.Vanilla);
             selected(current-value) => {
                 instance.loader = loader-to-enum(current-value);
             }
         }
 
-        if instance.loader != LoaderS.Vanilla: TextEdit {
+        if instance.loader != LoaderS.Vanilla: LineEdit {
+            height: 30px;
             placeholder-text: "Loader Version";
-            text: instance.loader-version; 
+            text: instance.loader-version;
+            edited(text) => {
+                instance.loader-version = text;
+            }
         }
-        
+
         Button {
+            height: 30px;
             text: "Create Instance";
             clicked => {
                 Logic.create-instance(instance);
             } 
         }
+        
     }
 }

@@ -1,0 +1,31 @@
+import { Button, VerticalBox } from "std-widgets.slint";
+
+export enum AuthMode { Online, Offline }
+export component ExportedComponent inherits VerticalLayout {
+    in-out property <AuthMode> auth_mode;
+    
+    HorizontalLayout {
+        Button {
+            text: "Online Auth";
+            clicked => {
+                auth_mode = AuthMode.Online;
+            } 
+        }
+
+        Button {
+            text: "Offline Auth";
+            clicked => {
+                auth_mode = AuthMode.Offline;
+            } 
+        }
+
+        if auth_mode == AuthMode.Online: VerticalBox {
+            
+        }
+
+        if auth_mode == AuthMode.Offline: VerticalBox {
+            
+        }
+
+    }
+}

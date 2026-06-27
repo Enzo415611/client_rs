@@ -7,9 +7,9 @@ export component SelectInstancePage inherits VerticalLayout {
     Rectangle {
         background: #363636;
         width: 200px;
-        CreateInstance {}
         ListView {
-            for instance in Logic.instances : HorizontalLayout {
+            height: parent.height;
+            for instance in Logic.instances : VerticalLayout {
                 padding: 4px;
                 SelectInstanceButton {
                     instance: instance;

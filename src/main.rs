@@ -2,23 +2,35 @@
 
 mod launcher;
 
-use std::{error::Error, sync::{Arc}};
+use std::{error::Error, sync::Arc};
 
-
-
-use lighty_launcher::{Loader, VersionBuilder, auth::{MicrosoftAuth, OfflineAuth}, launch::InstanceControl};
+use lighty_launcher::{
+    Loader, UserProfile, VersionBuilder,
+    auth::{MicrosoftAuth, OfflineAuth},
+    launch::InstanceControl,
+};
 use parking_lot::Mutex;
-use slint::{Weak};
+use slint::Weak;
 
-use crate::launcher::{new_instance_thread};
+use crate::launcher::create_instance;
 
 slint::include_modules!();
 
 struct AppState {
+    current_profile: Option<UserProfile>,
+    current_profil_type: ProfileEnum,
+    instances: Vec<Instance>,
+    instances_for_slint: Vec<InstanceS>,
+}
+
+enum ProfileEnum {
+    Online,
+    Offline,
+}
+
+struct Profile {
     offline_auth: Option<OfflineAuth>,
     online_auth: Option<MicrosoftAuth>,
-    instances: Vec<Instance>,
-    simple_instances: Vec<NewInstance>
 }
 
 #[derive(Clone)]
@@ -27,32 +39,23 @@ struct Instance {
     is_run: bool,
 }
 
-struct NewInstance {
-    pid: u32,
-    name: String,
-    version: String,
-    loader_version: String,
-    loader: Loader,
-    is_run: bool
-}
 
 impl AppState {
     fn new() -> Self {
         Self {
-            offline_auth: None,
-            online_auth: None,
+            current_profile: None,
+            current_profil_type: ProfileEnum::Offline,
             instances: vec![],
-            simple_instances: vec![]
+            instances_for_slint: vec![],
         }
     }
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
     let ui = AppWindow::new()?;
+    lighty_launcher::_core::AppState::init(".minecraft")?;
     let logic = ui.global::<Logic>();
-        
     let app_state = Arc::new(Mutex::new(AppState::new()));
-    
     let weak: Weak<AppWindow> = ui.as_weak();
     on_create_instance(weak, logic, app_state);
 
@@ -60,19 +63,37 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+fn to_loader(loader: &LoaderS) -> Loader {
+    match loader {
+        LoaderS::Vanilla => Loader::Vanilla,
+        LoaderS::Fabric => Loader::Fabric,
+        LoaderS::Forge => Loader::Forge,
+        LoaderS::Optifine => Loader::Optifine,
+        LoaderS::NeoForge => Loader::NeoForge,
+        LoaderS::Quilt => Loader::Quilt,
+    }
+}
+
+struct SimpleInstance {
+    pid: u32,
+    name: String,
+    version: String,
+    loader: Loader,
+    loader_version: String,
+    is_run: bool
+}
 
 fn on_create_instance(weak: Weak<AppWindow>, logic: Logic, app_state: Arc<Mutex<AppState>>) {
-    
-    logic.on_create_instance(move|instance| {
-        let new_instance = NewInstance {
+    logic.on_create_instance(move |instance| {
+        let new_instance: SimpleInstance = SimpleInstance {
             pid: 0,
             name: instance.name.to_string(),
             version: instance.version.to_string(),
-            loader: Loader::Vanilla,
+            loader: to_loader(&instance.loader),
             loader_version: instance.loader_version.to_string(),
-            is_run: true
+            is_run: false,
         };
-        
-        new_instance_thread(weak.clone(), app_state.clone(), new_instance);
+
+        create_instance(weak.clone(), app_state.clone(), new_instance).ok();
     });
 }
