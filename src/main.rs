@@ -6,19 +6,28 @@ use std::{error::Error, sync::{Arc}};
 
 
 
-use lighty_launcher::{Loader, VersionBuilder};
+use lighty_launcher::{Loader, VersionBuilder, auth::{MicrosoftAuth, OfflineAuth}, launch::InstanceControl};
 use parking_lot::Mutex;
-use slint::{ModelRc, SharedString, VecModel, Weak};
+use slint::{Weak};
 
-use crate::launcher::{get_minecraft_dir, new_instance_thread};
+use crate::launcher::{new_instance_thread};
 
 slint::include_modules!();
 
 struct AppState {
-    instances: Vec<VersionBuilder<Loader>>,
+    offline_auth: Option<OfflineAuth>,
+    online_auth: Option<MicrosoftAuth>,
+    instances: Vec<Instance>,
+    simple_instances: Vec<NewInstance>
 }
 
+#[derive(Clone)]
 struct Instance {
+    version_builder: VersionBuilder<Loader>,
+    is_run: bool,
+}
+
+struct NewInstance {
     pid: u32,
     name: String,
     version: String,
@@ -30,7 +39,10 @@ struct Instance {
 impl AppState {
     fn new() -> Self {
         Self {
+            offline_auth: None,
+            online_auth: None,
             instances: vec![],
+            simple_instances: vec![]
         }
     }
 }
@@ -41,18 +53,18 @@ fn main() -> Result<(), Box<dyn Error>> {
         
     let app_state = Arc::new(Mutex::new(AppState::new()));
     
-    let weak = ui.as_weak();
-    on_run_instance(weak, logic, app_state);
-    // new_instance_thread(weak, app_state.clone());
+    let weak: Weak<AppWindow> = ui.as_weak();
+    on_create_instance(weak, logic, app_state);
 
     ui.run()?;
     Ok(())
 }
 
 
-fn on_run_instance(weak: Weak<AppWindow>, logic: Logic, app_state: Arc<Mutex<AppState>>) {
-    logic.on_run_instance(move|instance| {
-        let new_instance = Instance {
+fn on_create_instance(weak: Weak<AppWindow>, logic: Logic, app_state: Arc<Mutex<AppState>>) {
+    
+    logic.on_create_instance(move|instance| {
+        let new_instance = NewInstance {
             pid: 0,
             name: instance.name.to_string(),
             version: instance.version.to_string(),

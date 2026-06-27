@@ -1,19 +1,19 @@
 import { TabWidget, HorizontalBox } from "std-widgets.slint";
-import { Logic, InstanceS, Loader } from "../Logic.slint";
+import { Logic, InstanceS, LoaderS } from "../Logic.slint";
 
 export component SelectInstanceButton {
     in-out property <InstanceS> instance;
 
     function loader-to-string() -> string {
-        if instance.loader == Loader.Vanilla {
+        if instance.loader == LoaderS.Vanilla {
             "Vanilla"
-        } else if instance.loader == Loader.Fabric {
+        } else if instance.loader == LoaderS.Fabric {
             "Fabric"
-        } else if instance.loader == Loader.Optifine {
+        } else if instance.loader == LoaderS.Optifine {
             "Optifine"
-        } else if instance.loader == Loader.NeoForge {
+        } else if instance.loader == LoaderS.NeoForge {
             "NeoForge"
-        } else if instance.loader == Loader.Quilt {
+        } else if instance.loader == LoaderS.Quilt {
             "Quilt"
         } else {
             "Vanilla"
@@ -44,7 +44,7 @@ export component SelectInstanceButton {
 
         TouchArea {
             clicked => {
-                Logic.run-instance(instance);
+                Logic.run-instance(instance.name);
                 instance.is-run = instance.is-run ? false : true;
             }
         }

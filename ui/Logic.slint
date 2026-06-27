@@ -1,15 +1,19 @@
-export enum Loader {Vanilla, Fabric, Forge, Optifine, NeoForge, Quilt}
+export enum LoaderS {Vanilla, Fabric, Forge, Optifine, NeoForge, Quilt}
+export enum Login {Offline, Online}
+export enum Page {CreateInstance, PlayInstance, Login}
 
 export struct InstanceS {
     name: string,
     version: string,
     loader-version: string,
-    loader: Loader,    
-    is_run: bool,
+    loader: LoaderS,
+    is_run: bool
 }
 
 export global Logic {
     in-out property <[InstanceS]> instances;
+    in-out property <Page> current-page;
 
-    callback run-instance(InstanceS);
+    callback create-instance(InstanceS);
+    callback run-instance(name: string);
 }

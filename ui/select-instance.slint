@@ -1,11 +1,13 @@
 import { ListView } from "std-widgets.slint";
 import { SelectInstanceButton } from "components/select-instance-button.slint";
 import { Logic } from "Logic.slint";
+import { CreateInstance } from "create-instance.slint";
 
 export component SelectInstancePage inherits VerticalLayout {
     Rectangle {
         background: #363636;
         width: 200px;
+        CreateInstance {}
         ListView {
             for instance in Logic.instances : HorizontalLayout {
                 padding: 4px;

@@ -1,0 +1,81 @@
+import { LoaderS, Logic, InstanceS } from "Logic.slint";
+import { ComboBox, Button, TextEdit } from "std-widgets.slint";
+
+export component CreateInstance {
+    in-out property <InstanceS> instance;
+    
+    function loader-to-string(loader: LoaderS) -> string {
+        if loader == LoaderS.Vanilla {
+            "Vanilla"
+        } else if loader == LoaderS.Fabric {
+            "Fabric"
+        } else if loader == LoaderS.Forge {
+            "Forge"
+        } else if loader == LoaderS.Optifine {
+            "Optifine"
+        } else if loader == LoaderS.NeoForge {
+            "NeoForge"
+        } else if loader == LoaderS.Quilt {
+            "Quilt"
+        } else {
+            "Vanilla"
+        }
+    }
+
+    function loader-to-enum(loader: string) -> LoaderS {
+        if loader == "Vanilla" {
+            LoaderS.Vanilla
+        } else if loader == "Fabric" {
+            LoaderS.Fabric
+        } else if loader == "Forge" {
+            LoaderS.Forge
+        } else if loader == "Optifine" {
+            LoaderS.Optifine
+        } else if loader == "NeoForge" {
+            LoaderS.NeoForge
+        } else if loader == "Quilt" {
+            LoaderS.Quilt
+        } else {
+            LoaderS.Vanilla
+        }
+    }
+
+    VerticalLayout {
+        TextInput {
+            single-line: true;
+            text: instance.name;
+        }
+
+        TextInput {
+            single-line: true;
+            text: instance.version;
+        }
+
+        ComboBox {
+            model: [
+                loader-to-string(LoaderS.Vanilla),
+                loader-to-string(LoaderS.Fabric),
+                loader-to-string(LoaderS.Forge),
+                loader-to-string(LoaderS.Optifine),
+                loader-to-string(LoaderS.NeoForge),
+                loader-to-string(LoaderS.Quilt)
+            ];
+            current-value: loader-to-string(LoaderS.Vanilla);
+            selected(current-value) => {
+                instance.loader = loader-to-enum(current-value);
+            }
+        }
+
+        if instance.loader != LoaderS.Vanilla: TextEdit {
+            placeholder-text: "Loader Version";
+            text: instance.loader-version; 
+        }
+        
+        Button {
+            text: "Create Instance";
+            clicked => {
+                Logic.create-instance(instance);
+            } 
+        }
+    }
+}
