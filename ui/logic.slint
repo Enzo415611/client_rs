@@ -1,0 +1,34 @@
+export enum LoaderS {Vanilla, Fabric, Forge, Optifine, NeoForge, Quilt}
+export enum Login {Offline, Online}
+export enum Page {CreateInstance, EditInstance, Login}
+export enum AccountSelectedS { Online, Offline }
+
+
+export struct Account {
+    name: string,
+    mode: string
+}
+
+export struct InstanceS {
+    name: string,
+    version: string,
+    loader-version: string,
+    loader: LoaderS,
+    is_run: bool
+}
+
+export global Logic {
+    in-out property <Page> current-page: Page.Login;
+    in-out property <AccountSelectedS> Account-mod-selected;
+    in-out property <string> offline_profile_name;
+    in-out property <[InstanceS]> instances;
+    in-out property <Account> current-profile;
+    in-out property <[Account]> accounts;
+
+    callback create-instance(InstanceS);
+    callback run-instance(name: string);
+
+    callback login_online_account();
+    callback create-offline-account(name: string);
+    pure callback accounts-to([Account]) -> [string];
+}

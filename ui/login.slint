@@ -1,0 +1,75 @@
+import { Button, VerticalBox, LineEdit, ComboBox } from "std-widgets.slint";
+import { Logic, Account } from "logic.slint";
+
+export enum AuthMode { Online, Offline }
+export component LoginPage inherits VerticalLayout {
+    in-out property <AuthMode> auth_mode;
+    in-out property <string> name;
+    in-out property <bool> is-create-mode: false;
+    in-out property <bool> is-select-mode: true;
+
+    HorizontalLayout {
+        alignment: LayoutAlignment.center;
+        visible: is-select-mode;
+        Button {
+            text: "Online Auth";
+            clicked => {
+                auth_mode = AuthMode.Online;
+                root.is-create-mode = true;
+                root.is-select-mode = false;
+                Logic.login_online_account();
+            }
+        }
+
+        Button {
+            text: "Offline Auth";
+            clicked => {
+                auth_mode = AuthMode.Offline;
+                root.is-create-mode = true;
+                root.is-select-mode = false;
+            }
+        }
+
+        ComboBox {
+            model: Logic.accounts-to(Logic.accounts);
+        }
+    }
+
+    HorizontalLayout {
+        visible: root.is-create-mode;
+        
+
+        Button {
+            text: "<";
+            width: 40px;
+            clicked => {
+                root.is-create-mode = false;
+                root.is-select-mode = true;
+            } 
+        }
+
+        if auth_mode == AuthMode.Online: VerticalBox {
+            alignment: LayoutAlignment.center;
+        }
+
+        if auth_mode == AuthMode.Offline: VerticalBox {
+            alignment: LayoutAlignment.center;
+            LineEdit {
+                placeholder-text: "Account Name";
+                edited(name) => {
+                    root.name = name;
+                }
+            }
+
+            if root.name.character-count > 0: Button {
+                text: "Create";
+                clicked => {
+                    Logic.current-profile.name = root.name;
+                    Logic.current-profile.mode = "Offline";
+                    Logic.create-offline-account(name);
+                }
+            }
+                
+        }
+    }
+}

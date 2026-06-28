@@ -1,6 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod launcher;
+mod auth;
 
 use std::{error::Error, sync::Arc};
 
@@ -9,28 +10,37 @@ use lighty_launcher::{
     auth::{MicrosoftAuth, OfflineAuth},
     launch::InstanceControl,
 };
+
 use parking_lot::Mutex;
 use slint::Weak;
 
-use crate::launcher::create_instance;
+use crate::{auth::{on_accounts_to_string, on_create_offline_account, on_create_online_account}, launcher::create_instance};
 
 slint::include_modules!();
 
 struct AppState {
-    current_profile: Option<UserProfile>,
-    current_profil_type: ProfileEnum,
+    current_account: Option<UserProfile>,
+    accounts: Vec<UserProfile>,
+    current_accounts_mode: ProfileEnum,
     instances: Vec<Instance>,
     instances_for_slint: Vec<InstanceS>,
+}
+
+impl AppState {
+    fn new() -> Self {
+        Self {
+            current_account: None,
+            current_accounts_mode: ProfileEnum::Offline,
+            accounts: vec![],
+            instances: vec![],
+            instances_for_slint: vec![],
+        }
+    }
 }
 
 enum ProfileEnum {
     Online,
     Offline,
-}
-
-struct Profile {
-    offline_auth: Option<OfflineAuth>,
-    online_auth: Option<MicrosoftAuth>,
 }
 
 #[derive(Clone)]
@@ -40,27 +50,25 @@ struct Instance {
 }
 
 
-impl AppState {
-    fn new() -> Self {
-        Self {
-            current_profile: None,
-            current_profil_type: ProfileEnum::Offline,
-            instances: vec![],
-            instances_for_slint: vec![],
-        }
-    }
-}
+
 
 fn main() -> Result<(), Box<dyn Error>> {
     let ui = AppWindow::new()?;
     lighty_launcher::_core::AppState::init(".minecraft")?;
-    let logic = ui.global::<Logic>();
-    let app_state = Arc::new(Mutex::new(AppState::new()));
+    let _logic = ui.global::<Logic>();
     let weak: Weak<AppWindow> = ui.as_weak();
-    on_create_instance(weak, logic, app_state);
-
+    let app_state = Arc::new(Mutex::new(AppState::new()));
+    
+    slint_callbacks(weak, app_state);
     ui.run()?;
     Ok(())
+}
+
+fn slint_callbacks(weak: Weak<AppWindow>, app_state: Arc<Mutex<AppState>>) {
+    on_create_instance(weak.clone(), app_state.clone());
+    on_accounts_to_string(weak.clone());
+    on_create_online_account(weak.clone(), app_state.clone());
+    on_create_offline_account(weak.clone(), app_state.clone());
 }
 
 fn to_loader(loader: &LoaderS) -> Loader {
@@ -83,17 +91,21 @@ struct SimpleInstance {
     is_run: bool
 }
 
-fn on_create_instance(weak: Weak<AppWindow>, logic: Logic, app_state: Arc<Mutex<AppState>>) {
-    logic.on_create_instance(move |instance| {
-        let new_instance: SimpleInstance = SimpleInstance {
-            pid: 0,
-            name: instance.name.to_string(),
-            version: instance.version.to_string(),
-            loader: to_loader(&instance.loader),
-            loader_version: instance.loader_version.to_string(),
-            is_run: false,
-        };
+fn on_create_instance(weak: Weak<AppWindow>, app_state: Arc<Mutex<AppState>>) {
+    if let Some(ui) = weak.upgrade() {
+        let logic = ui.global::<Logic>();
+        logic.on_create_instance(move |instance| {
+            let new_instance: SimpleInstance = SimpleInstance {
+                pid: 0,
+                name: instance.name.to_string(),
+                version: instance.version.to_string(),
+                loader: to_loader(&instance.loader),
+                loader_version: instance.loader_version.to_string(),
+                is_run: false,
+            };
 
-        create_instance(weak.clone(), app_state.clone(), new_instance).ok();
-    });
+            create_instance(weak.clone(), app_state.clone(), new_instance).ok();
+        });
+    }
+    
 }

@@ -1,0 +1,34 @@
+import { Logic, Page } from "../logic.slint";
+import { Button, HorizontalBox } from "std-widgets.slint";
+
+export component TopBar inherits HorizontalLayout {
+    height: 40px;
+    
+    HorizontalLayout {
+        alignment: LayoutAlignment.start;
+        Button {
+                text: "Create Instance";
+                clicked => {
+                    Logic.current-page = Page.CreateInstance;
+                }
+            }
+    }
+
+    
+    HorizontalLayout {
+        alignment: LayoutAlignment.end;
+        Rectangle {
+            border-color: white;
+            border-width: 0.7px;
+            border-radius: 7px;
+
+            Text {
+                text: Logic.current-profile.name;
+            }
+            Text {
+                text: Logic.current-profile.mode;
+            }
+        }
+    }
+    
+}

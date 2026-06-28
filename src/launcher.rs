@@ -9,7 +9,7 @@ use slint::{
 use std::{env::consts::OS, path::PathBuf, sync::Arc};
 
 use crate::{
-    AppState, AppWindow, Instance, InstanceS, LoaderS, Logic, ProfileSelectedS, SimpleInstance,
+    AppState, AppWindow, Instance, InstanceS, LoaderS, Logic, AccountSelectedS, SimpleInstance,
 };
 
 fn to_slint_loader_enum(loader: &Loader) -> LoaderS {
@@ -41,41 +41,6 @@ pub fn get_minecraft_dir() -> PathBuf {
         }
         _ => PathBuf::new(),
     }
-}
-
-async fn auth(
-    app_state: Arc<Mutex<AppState>>,
-    weak: Weak<AppWindow>,
-) -> Result<MicrosoftAuth, OfflineAuth> {
-    slint::spawn_local(async_compat::Compat::new(async move {
-        if let Some(ui) = weak.upgrade() {
-            let logic = ui.global::<Logic>();
-
-            match logic.get_profile_mod_selected() {
-                ProfileSelectedS::Online => {
-                    let mut auth = auth::MicrosoftAuth::new("");
-
-                    if let Ok(user) = auth.authenticate(None).await {
-                        app_state.lock().current_profile = Some(user);
-                    }
-
-                    app_state.lock().current_profil_type = crate::ProfileEnum::Online;
-                }
-                ProfileSelectedS::Offline => {
-                    let mut auth =
-                        auth::OfflineAuth::new(logic.get_offline_profile_name().to_string());
-                    if let Ok(user) = auth.authenticate(None).await {
-                        app_state.lock().current_profile = Some(user);
-                    }
-
-                    app_state.lock().current_profil_type = crate::ProfileEnum::Offline;
-                }
-            }
-        }
-    }))
-    .ok();
-
-    todo!()
 }
 
 pub fn create_instance(
@@ -155,7 +120,7 @@ fn on_run_instance(weak: Weak<AppWindow>, app_state: Arc<Mutex<AppState>>) {
             if let Some(mut instance) = get_instance_by_name(app_state.clone(), &name) {
                 let app_state = app_state.clone();
                 slint::spawn_local(async_compat::Compat::new(async move {
-                    if let Some(user) = &app_state.lock().current_profile {
+                    if let Some(user) = &app_state.lock().current_account {
                         _ = instance
                             .version_builder
                             .launch(user, lighty_launcher::JavaDistribution::Temurin)
@@ -166,5 +131,12 @@ fn on_run_instance(weak: Weak<AppWindow>, app_state: Arc<Mutex<AppState>>) {
                 .ok();
             }
         });
+    }
+}
+
+
+fn open_url(url: &str) {
+    if let Err(err) = open::that(url) {
+        eprintln!("{}", err);
     }
 }
