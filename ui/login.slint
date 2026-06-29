@@ -1,14 +1,46 @@
-import { Button, VerticalBox, LineEdit, ComboBox } from "std-widgets.slint";
+import { Button, VerticalBox, LineEdit, ComboBox, ListView, HorizontalBox } from "std-widgets.slint";
 import { Logic, Account } from "logic.slint";
 
 export enum AuthMode { Online, Offline }
+
+
+export component AccountList inherits HorizontalBox {
+    alignment: LayoutAlignment.center;
+    
+    VerticalLayout {
+        alignment: LayoutAlignment.center;
+        Text {
+            text: "Offline Accounts";
+        }
+        ListView {
+            height: 300px;
+            for account in Logic.accounts: Button {
+                text: account.name + "\n" + account.mode;
+                clicked => {
+                    debug(account);
+                }
+            }
+        }
+    }
+
+}
+
+
+
 export component LoginPage inherits VerticalLayout {
     in-out property <AuthMode> auth_mode;
     in-out property <string> name;
     in-out property <bool> is-create-mode: false;
     in-out property <bool> is-select-mode: true;
 
-    HorizontalLayout {
+
+    function check_number_accounts() -> bool {
+        if Logic.accounts.length >= 1 && is-select-mode {
+            true
+        } else {false}
+    }
+
+    HorizontalBox {
         alignment: LayoutAlignment.center;
         visible: is-select-mode;
         Button {
@@ -29,10 +61,10 @@ export component LoginPage inherits VerticalLayout {
                 root.is-select-mode = false;
             }
         }
-
-        ComboBox {
-            model: Logic.accounts-to(Logic.accounts);
-        }
+    }
+    
+    AccountList {
+        visible: check_number_accounts();
     }
 
     HorizontalLayout {
@@ -64,8 +96,6 @@ export component LoginPage inherits VerticalLayout {
             if root.name.character-count > 0: Button {
                 text: "Create";
                 clicked => {
-                    Logic.current-profile.name = root.name;
-                    Logic.current-profile.mode = "Offline";
                     Logic.create-offline-account(name);
                 }
             }

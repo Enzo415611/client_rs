@@ -20,7 +20,6 @@ export struct InstanceS {
 export global Logic {
     in-out property <Page> current-page: Page.Login;
     in-out property <AccountSelectedS> Account-mod-selected;
-    in-out property <string> offline_profile_name;
     in-out property <[InstanceS]> instances;
     in-out property <Account> current-profile;
     in-out property <[Account]> accounts;
@@ -28,7 +27,7 @@ export global Logic {
     callback create-instance(InstanceS);
     callback run-instance(name: string);
 
-    callback login_online_account();
+    callback login_online-account();
+    callback login-offline-account(Account);
     callback create-offline-account(name: string);
-    pure callback accounts-to([Account]) -> [string];
 }

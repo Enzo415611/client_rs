@@ -14,13 +14,14 @@ use lighty_launcher::{
 use parking_lot::Mutex;
 use slint::Weak;
 
-use crate::{auth::{on_accounts_to_string, on_create_offline_account, on_create_online_account}, launcher::create_instance};
+use crate::{auth::{on_create_offline_account, on_create_online_account}, launcher::create_instance};
 
 slint::include_modules!();
 
 struct AppState {
     current_account: Option<UserProfile>,
     accounts: Vec<UserProfile>,
+    accounts_for_slint: Vec<String>,
     current_accounts_mode: ProfileEnum,
     instances: Vec<Instance>,
     instances_for_slint: Vec<InstanceS>,
@@ -32,6 +33,7 @@ impl AppState {
             current_account: None,
             current_accounts_mode: ProfileEnum::Offline,
             accounts: vec![],
+            accounts_for_slint: vec![],
             instances: vec![],
             instances_for_slint: vec![],
         }
@@ -66,7 +68,6 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 fn slint_callbacks(weak: Weak<AppWindow>, app_state: Arc<Mutex<AppState>>) {
     on_create_instance(weak.clone(), app_state.clone());
-    on_accounts_to_string(weak.clone());
     on_create_online_account(weak.clone(), app_state.clone());
     on_create_offline_account(weak.clone(), app_state.clone());
 }
