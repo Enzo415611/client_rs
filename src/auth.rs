@@ -11,6 +11,7 @@ use slint::{ComponentHandle, Model, ModelRc, SharedString, ToSharedString, VecMo
 use crate::{AccountS, AccountSelectedS, AppState, AppWindow, Logic};
 
 // login para contas online
+
 pub fn on_login_online_account(weak: Weak<AppWindow>, app_state: Arc<Mutex<AppState>>) {
     if let Some(ui) = weak.upgrade() {
         let logic = ui.global::<Logic>();
@@ -19,41 +20,96 @@ pub fn on_login_online_account(weak: Weak<AppWindow>, app_state: Arc<Mutex<AppSt
             let weak = weak.clone();
             let app_state = app_state.clone();
 
-            slint::spawn_local(async_compat::Compat::new(async move {
-                if let Some(ui) = weak.upgrade() {
-                    let logic = ui.global::<Logic>();
+            if let Some(ui) = weak.upgrade() {
+                let logic = ui.global::<Logic>();
+                let accounts = &app_state.lock().accounts;
 
-                    let mut auth = auth::MicrosoftAuth::new("00000000402b5328");
-                    let event_bus = EventBus::new(1000);
-                    let mut rx = event_bus.subscribe();
-
-                    if let Ok(user) = auth.authenticate(Some(&event_bus)).await {
-                        logic.set_current_profile(AccountS {
+                match accounts
+                    .iter()
+                    .find(|user| user.username == account.name.to_string())
+                {
+                    Some(user) => {
+                        logic.set_current_account(AccountS {
                             mode: "Online".into(),
                             name: user.username.clone().to_shared_string(),
                         });
-                        let mut accounts = vec![];
-
-                        accounts.push(AccountS {
-                            mode: "Online".to_shared_string(),
-                            name: user.username.clone().to_shared_string(),
-                        });
-
-                        logic.set_accounts(ModelRc::new(VecModel::from(accounts)));
-                        app_state.lock().current_account = Some(user);
+                        app_state.lock().current_account = Some(user.clone());
+                        true
                     }
+                    None => {
+                        slint::spawn_local(async_compat::Compat::new(async move {
+                            if let Some(ui) = weak.upgrade() {
+                                let logic = ui.global::<Logic>();
 
-                    match rx.next().await.expect("") {
-                        lighty_launcher::event::Event::Auth(auth) => match auth {
-                            _ => println!("{:?}", auth),
-                        },
-                        _ => {}
+                                let mut auth = auth::MicrosoftAuth::new("00000000402b5328");
+                                let event_bus = EventBus::new(1000);
+                                let mut rx = event_bus.subscribe();
+
+                                // auth.set_device_code_callback(|code, url| {
+                                //     println!("code: {}, url: {}", code, url)
+                                // });
+
+                                if let Ok(user) = auth.authenticate(Some(&event_bus)).await {
+                                    let mut accounts = vec![];
+
+                                    accounts.push(AccountS {
+                                        mode: "Online".to_shared_string(),
+                                        name: user.username.clone().to_shared_string(),
+                                    });
+
+                                    logic.set_accounts(ModelRc::new(VecModel::from(accounts)));
+                                    true
+                                } else {false}
+
+                                // match rx.next().await.expect("") {
+                                //     lighty_launcher::event::Event::Auth(auth) => match auth {
+                                //         _ => println!("{:?}", auth),
+                                //     },
+                                //     lighty_launcher::event::Event::ConsoleOutput(out) => {
+                                //         println!("{}", out.line);
+                                //         println!("{:?}", out)
+                                //     }
+                                //     _ => {}
+                                // }
+                            } else {false}
+                        }))
+                        .ok();
+                    false
                     }
-
-                    app_state.lock().current_accounts_mode = crate::ProfileEnum::Online;
                 }
-            }))
-            .ok();
+            } else {false}
+        });
+    }
+}
+
+
+pub fn on_login_offline_account(weak: Weak<AppWindow>, app_state: Arc<Mutex<AppState>>) {
+    if let Some(ui) = weak.upgrade() {
+        let logic = ui.global::<Logic>();
+
+        logic.on_login_offline_account(move |account| {
+            let app_state = app_state.clone();
+            let weak = weak.clone();
+            if let Some(ui) = weak.upgrade() {
+                let accounts = &app_state.lock().accounts;
+                let logic = ui.global::<Logic>();
+                match accounts
+                    .iter()
+                    .find(|user| user.username == account.name.to_string())
+                {
+                    Some(user) => {
+                        app_state.lock().current_account = Some(user.clone());
+                        logic.set_current_account(AccountS {
+                            mode: "Offline".into(),
+                            name: user.username.to_shared_string(),
+                        });
+                        true
+                    }
+                    None => false,
+                }
+            } else {
+                false
+            }
         });
     }
 }
@@ -117,7 +173,7 @@ pub fn on_create_offline_account(weak: Weak<AppWindow>, app_state: Arc<Mutex<App
                     }
                 }))
                 .ok();
-            true
+                true
             }
         });
     }

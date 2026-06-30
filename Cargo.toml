@@ -4,11 +4,11 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-anyhow = "1.0.102"
+anyhow = "1.0.103"
 async-compat = "0.2.5"
 dirs = "6.0.0"
-lighty-launcher = { version = "26.5.12", features = ["vanilla", "fabric", "events"] }
-open = "5.3.5"
+lighty-launcher = { version = "26.5.12", features = ["all-loaders", "events"] }
+open = "5.3.6"
 parking_lot = "0.12.5"
 slint = "1.17.0"
 tokio = { version = "1.52.3", features = ["rt-multi-thread"] }

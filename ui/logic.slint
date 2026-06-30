@@ -21,17 +21,18 @@ export global Logic {
     in-out property <Page> current-page: Page.Login;
     in-out property <AccountSelectedS> Account-mod-selected;
     in-out property <[InstanceS]> instances;
-    in-out property <AccountS> current-profile;
+    in-out property <AccountS> current-account;
     in-out property <[AccountS]> accounts;
 
     callback create-instance(InstanceS);
     callback run-instance(name: string);
 
-    // login online 
-    callback login-online-account(AccountS);
+    // login online account
+    callback login-online-account(AccountS) -> bool;
 
     // create offline account
     callback create-offline-account(AccountS) -> bool;
-    callback login-offline-account(AccountS);
+    // login offline account
+    callback login-offline-account(AccountS) -> bool;
 }
 

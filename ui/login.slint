@@ -5,8 +5,21 @@ import {
     ComboBox,
     ListView,
     HorizontalBox,
+    GridBox,
 } from "std-widgets.slint";
 import { Logic, AccountS } from "logic.slint";
+
+export global LoginLogic {
+    in-out property <AccountS> new-account;
+    in-out property <bool> is-select-mode: true;
+
+    public pure function check_number_accounts() -> bool {
+        if Logic.accounts.length >= 1 {
+            true
+        } else { false }
+    }
+}
+
 
 export component AccountList inherits HorizontalBox {
     alignment: LayoutAlignment.center;
@@ -20,15 +33,18 @@ export component AccountList inherits HorizontalBox {
         }
 
         ListView {
+            width: 200px;
             height: 300px;
-            width: 100px;
-            for account in Logic.accounts: Button {
-                text: account.name + "\n" + account.mode;
-                clicked => {
-                    if account.mode == "Online" {
-                        Logic.login-online-account(account)
-                    } else {
-                        Logic.login-offline-account(account)
+            for account in Logic.accounts: HorizontalLayout {
+                padding: 4px;
+                Button {
+                    text: account.name + "\n" + account.mode;
+                    clicked => {
+                        if account.mode == "Online" {
+                            Logic.login-online-account(account)
+                        } else {
+                            Logic.login-offline-account(account)
+                        }
                     }
                 }
             }
@@ -36,57 +52,64 @@ export component AccountList inherits HorizontalBox {
     }
 }
 
+export component SelectAccountLogin inherits VerticalBox {
+    alignment: LayoutAlignment.center;
 
-
-export component LoginPage inherits VerticalBox {
-    in-out property <string> name;
-    in-out property <bool> is-create-mode: false;
-    in-out property <bool> is-select-mode: true;
-    in-out property <AccountS> new-account;
-
-    function check_number_accounts() -> bool {
-        if Logic.accounts.length >= 1 {
-            true
-        } else { false }
-    }
-
-    select-account := VerticalBox {
+    HorizontalBox {
         alignment: LayoutAlignment.center;
-        visible: is-select-mode;
-        HorizontalLayout {
-            Button {
-                text: "Online Auth";
-                clicked => {
-                    root.new-account.mode = "Online";
-                    root.new-account.name = "";
-                    root.is-create-mode = true;
-                    root.is-select-mode = false;
-                    Logic.login-online-account(root.new-account);
-                }
-            }
-
-            Button {
-                text: "Offline Auth";
-                clicked => {
-                    root.new-account.mode = "Offline";
-                    root.new-account.name = "";
-                    root.is-create-mode = true;
-                    root.is-select-mode = false;
-                }
-            }
-        }
-
-        AccountList {
-            visible: check_number_accounts();
-        }
-    }
-
-    HorizontalLayout {
-        alignment: LayoutAlignment.center;
-        height: 100%;
 
         Rectangle {
-            visible: root.is-create-mode;
+            border-color: white;
+            border-radius: 7px;
+            border-width: 0.7px;
+
+            width: 500px;
+            height: 500px;
+
+            VerticalBox {
+                HorizontalLayout {
+                    height: 30px;
+                    alignment: LayoutAlignment.center;
+                    padding: 3px;
+                    spacing: 10px;
+                    Button {
+                        text: "Online Auth";
+                        height: 30px;
+                        width: 150px;
+                        clicked => {
+                            LoginLogic.new-account.mode = "Online";
+                            LoginLogic.new-account.name = "";
+                            LoginLogic.is-select-mode = false;
+                            Logic.login-online-account(LoginLogic.new-account);
+                        }
+                    }
+
+                    Button {
+                        text: "Offline Auth";
+                        height: 30px;
+                        width: 150px;
+                        clicked => {
+                            LoginLogic.new-account.mode = "Offline";
+                            LoginLogic.new-account.name = "";
+                            LoginLogic.is-select-mode = false;
+                        }
+                    }
+                }
+
+                if LoginLogic.check_number_accounts(): AccountList { }
+            }
+        }
+    }
+}
+
+export component CreateOrLoginAccount inherits VerticalBox {
+    alignment: LayoutAlignment.center;
+    height: 100%;
+
+    HorizontalBox {
+        alignment: LayoutAlignment.center;
+
+        Rectangle {
             border-color: white;
             border-radius: 7px;
             border-width: 0.7px;
@@ -97,14 +120,14 @@ export component LoginPage inherits VerticalBox {
             HorizontalLayout {
                 alignment: LayoutAlignment.center;
 
-                if root.new-account.mode == "Online": VerticalBox {
+                if LoginLogic.new-account.mode == "Online": VerticalBox {
                     alignment: LayoutAlignment.center;
                     Text {
                         text: "Link www foi aberto no navegador";
                     }
                 }
 
-                if root.new-account.mode == "Offline": VerticalBox {
+                if LoginLogic.new-account.mode == "Offline": VerticalBox {
                     alignment: LayoutAlignment.center;
 
                     HorizontalBox {
@@ -113,10 +136,9 @@ export component LoginPage inherits VerticalBox {
                         Button {
                             text: "<";
                             clicked => {
-                                root.is-create-mode = false;
-                                root.is-select-mode = true;
-                                root.new-account.name = "";
-                                root.new-account.mode = "";
+                                LoginLogic.is-select-mode = true;
+                                LoginLogic.new-account.name = "";
+                                LoginLogic.new-account.mode = "";
                             }
                         }
 
@@ -124,21 +146,21 @@ export component LoginPage inherits VerticalBox {
                             placeholder-text: "Account Name";
                             width: 300px;
                             edited(name) => {
-                                root.new-account.name = name;
+                                LoginLogic.new-account.name = name;
                             }
                         }
                     }
 
                     HorizontalLayout {
                         alignment: LayoutAlignment.center;
-                        
-                        if root.new-account.name > 0: Button {
+
+                        if LoginLogic.new-account.name > 0: Button {
                             text: "Create";
                             width: 200px;
                             clicked => {
-                                is-created-text.text = Logic.create-offline-account(root.new-account) ? "Account Created" : "The account already exists";
+                                is-created-text.text = Logic.create-offline-account(LoginLogic.new-account) ? "Account Created" : "The account already exists";
                                 line-edit.text = "";
-                                root.new-account.name = "";
+                                LoginLogic.new-account.name = "";
                             }
                         }
                     }
@@ -151,4 +173,11 @@ export component LoginPage inherits VerticalBox {
             }
         }
     }
+}
+
+
+export component LoginPage inherits VerticalBox {
+    if LoginLogic.is-select-mode:SelectAccountLogin { }
+
+    if !LoginLogic.is-select-mode:CreateOrLoginAccount { }
 }

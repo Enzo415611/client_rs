@@ -14,7 +14,7 @@ use lighty_launcher::{
 use parking_lot::Mutex;
 use slint::Weak;
 
-use crate::{auth::{on_create_offline_account, on_login_online_account}, launcher::create_instance};
+use crate::{auth::{on_create_offline_account, on_login_online_account, on_login_offline_account}, launcher::create_instance};
 
 slint::include_modules!();
 
@@ -22,7 +22,6 @@ struct AppState {
     current_account: Option<UserProfile>,
     accounts: Vec<UserProfile>,
     accounts_for_slint: Vec<String>,
-    current_accounts_mode: ProfileEnum,
     instances: Vec<Instance>,
     instances_for_slint: Vec<InstanceS>,
 }
@@ -31,7 +30,6 @@ impl AppState {
     fn new() -> Self {
         Self {
             current_account: None,
-            current_accounts_mode: ProfileEnum::Offline,
             accounts: vec![],
             accounts_for_slint: vec![],
             instances: vec![],
@@ -68,8 +66,9 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 fn slint_callbacks(weak: Weak<AppWindow>, app_state: Arc<Mutex<AppState>>) {
     on_create_instance(weak.clone(), app_state.clone());
-    on_create_offline_account(weak.clone(), app_state.clone());
     on_login_online_account(weak.clone(), app_state.clone());
+    on_create_offline_account(weak.clone(), app_state.clone());
+    on_login_offline_account(weak.clone(), app_state.clone());
 }
 
 fn to_loader(loader: &LoaderS) -> Loader {
