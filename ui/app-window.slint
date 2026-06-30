@@ -5,16 +5,16 @@ import {
     HorizontalBox,
 } from "std-widgets.slint";
 import { SelectInstance } from "select-instance.slint";
-import { Logic, InstanceS, LoaderS, AccountSelectedS, Page } from "logic.slint"; export { Logic, InstanceS, LoaderS, AccountSelectedS }
+import { Logic, InstanceS, LoaderS, AccountSelectedS, Page, AccountS } from "logic.slint"; export { Logic, InstanceS, LoaderS, AccountSelectedS, AccountS }
 import { CreateInstance } from "create-instance.slint";
 import { LoginPage } from "login.slint";
 import { TopBar } from "components/top-bar.slint";
 
 
 export component AppWindow inherits Window {
-    preferred-width: 100px;
+    preferred-width: 1000px;
     preferred-height: 800px;
-    min-width: 100px;
+    min-width: 1000px;
     min-height: 800px;
 
     VerticalLayout {

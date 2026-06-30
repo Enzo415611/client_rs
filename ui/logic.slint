@@ -4,7 +4,7 @@ export enum Page {CreateInstance, EditInstance, Login}
 export enum AccountSelectedS { Online, Offline }
 
 
-export struct Account {
+export struct AccountS {
     name: string,
     mode: string
 }
@@ -21,13 +21,17 @@ export global Logic {
     in-out property <Page> current-page: Page.Login;
     in-out property <AccountSelectedS> Account-mod-selected;
     in-out property <[InstanceS]> instances;
-    in-out property <Account> current-profile;
-    in-out property <[Account]> accounts;
+    in-out property <AccountS> current-profile;
+    in-out property <[AccountS]> accounts;
 
     callback create-instance(InstanceS);
     callback run-instance(name: string);
 
-    callback login_online-account();
-    callback login-offline-account(Account);
-    callback create-offline-account(name: string);
+    // login online 
+    callback login-online-account(AccountS);
+
+    // create offline account
+    callback create-offline-account(AccountS) -> bool;
+    callback login-offline-account(AccountS);
 }
+

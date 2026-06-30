@@ -14,7 +14,7 @@ use lighty_launcher::{
 use parking_lot::Mutex;
 use slint::Weak;
 
-use crate::{auth::{on_create_offline_account, on_create_online_account}, launcher::create_instance};
+use crate::{auth::{on_create_offline_account, on_login_online_account}, launcher::create_instance};
 
 slint::include_modules!();
 
@@ -68,8 +68,8 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 fn slint_callbacks(weak: Weak<AppWindow>, app_state: Arc<Mutex<AppState>>) {
     on_create_instance(weak.clone(), app_state.clone());
-    on_create_online_account(weak.clone(), app_state.clone());
     on_create_offline_account(weak.clone(), app_state.clone());
+    on_login_online_account(weak.clone(), app_state.clone());
 }
 
 fn to_loader(loader: &LoaderS) -> Loader {

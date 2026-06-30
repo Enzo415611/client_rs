@@ -1,105 +1,154 @@
-import { Button, VerticalBox, LineEdit, ComboBox, ListView, HorizontalBox } from "std-widgets.slint";
-import { Logic, Account } from "logic.slint";
-
-export enum AuthMode { Online, Offline }
-
+import {
+    Button,
+    VerticalBox,
+    LineEdit,
+    ComboBox,
+    ListView,
+    HorizontalBox,
+} from "std-widgets.slint";
+import { Logic, AccountS } from "logic.slint";
 
 export component AccountList inherits HorizontalBox {
     alignment: LayoutAlignment.center;
-    
+
     VerticalLayout {
         alignment: LayoutAlignment.center;
         Text {
-            text: "Offline Accounts";
+            text: "Accounts";
+            font-size: 20px;
+            horizontal-alignment: TextHorizontalAlignment.center;
         }
+
         ListView {
             height: 300px;
+            width: 100px;
             for account in Logic.accounts: Button {
                 text: account.name + "\n" + account.mode;
                 clicked => {
-                    debug(account);
+                    if account.mode == "Online" {
+                        Logic.login-online-account(account)
+                    } else {
+                        Logic.login-offline-account(account)
+                    }
                 }
             }
         }
     }
-
 }
 
 
 
-export component LoginPage inherits VerticalLayout {
-    in-out property <AuthMode> auth_mode;
+export component LoginPage inherits VerticalBox {
     in-out property <string> name;
     in-out property <bool> is-create-mode: false;
     in-out property <bool> is-select-mode: true;
-
+    in-out property <AccountS> new-account;
 
     function check_number_accounts() -> bool {
-        if Logic.accounts.length >= 1 && is-select-mode {
+        if Logic.accounts.length >= 1 {
             true
-        } else {false}
+        } else { false }
     }
 
-    HorizontalBox {
+    select-account := VerticalBox {
         alignment: LayoutAlignment.center;
         visible: is-select-mode;
-        Button {
-            text: "Online Auth";
-            clicked => {
-                auth_mode = AuthMode.Online;
-                root.is-create-mode = true;
-                root.is-select-mode = false;
-                Logic.login_online_account();
+        HorizontalLayout {
+            Button {
+                text: "Online Auth";
+                clicked => {
+                    root.new-account.mode = "Online";
+                    root.new-account.name = "";
+                    root.is-create-mode = true;
+                    root.is-select-mode = false;
+                    Logic.login-online-account(root.new-account);
+                }
+            }
+
+            Button {
+                text: "Offline Auth";
+                clicked => {
+                    root.new-account.mode = "Offline";
+                    root.new-account.name = "";
+                    root.is-create-mode = true;
+                    root.is-select-mode = false;
+                }
             }
         }
 
-        Button {
-            text: "Offline Auth";
-            clicked => {
-                auth_mode = AuthMode.Offline;
-                root.is-create-mode = true;
-                root.is-select-mode = false;
-            }
+        AccountList {
+            visible: check_number_accounts();
         }
-    }
-    
-    AccountList {
-        visible: check_number_accounts();
     }
 
     HorizontalLayout {
-        visible: root.is-create-mode;
-        
+        alignment: LayoutAlignment.center;
+        height: 100%;
 
-        Button {
-            text: "<";
-            width: 40px;
-            clicked => {
-                root.is-create-mode = false;
-                root.is-select-mode = true;
-            } 
-        }
+        Rectangle {
+            visible: root.is-create-mode;
+            border-color: white;
+            border-radius: 7px;
+            border-width: 0.7px;
 
-        if auth_mode == AuthMode.Online: VerticalBox {
-            alignment: LayoutAlignment.center;
-        }
+            width: 500px;
+            height: 500px;
 
-        if auth_mode == AuthMode.Offline: VerticalBox {
-            alignment: LayoutAlignment.center;
-            LineEdit {
-                placeholder-text: "Account Name";
-                edited(name) => {
-                    root.name = name;
+            HorizontalLayout {
+                alignment: LayoutAlignment.center;
+
+                if root.new-account.mode == "Online": VerticalBox {
+                    alignment: LayoutAlignment.center;
+                    Text {
+                        text: "Link www foi aberto no navegador";
+                    }
+                }
+
+                if root.new-account.mode == "Offline": VerticalBox {
+                    alignment: LayoutAlignment.center;
+
+                    HorizontalBox {
+                        width: 100%;
+                        alignment: LayoutAlignment.center;
+                        Button {
+                            text: "<";
+                            clicked => {
+                                root.is-create-mode = false;
+                                root.is-select-mode = true;
+                                root.new-account.name = "";
+                                root.new-account.mode = "";
+                            }
+                        }
+
+                        line-edit := LineEdit {
+                            placeholder-text: "Account Name";
+                            width: 300px;
+                            edited(name) => {
+                                root.new-account.name = name;
+                            }
+                        }
+                    }
+
+                    HorizontalLayout {
+                        alignment: LayoutAlignment.center;
+                        
+                        if root.new-account.name > 0: Button {
+                            text: "Create";
+                            width: 200px;
+                            clicked => {
+                                is-created-text.text = Logic.create-offline-account(root.new-account) ? "Account Created" : "The account already exists";
+                                line-edit.text = "";
+                                root.new-account.name = "";
+                            }
+                        }
+                    }
+
+                    is-created-text := Text {
+                        horizontal-alignment: TextHorizontalAlignment.center;
+                        font-size: 20px;
+                    }
                 }
             }
-
-            if root.name.character-count > 0: Button {
-                text: "Create";
-                clicked => {
-                    Logic.create-offline-account(name);
-                }
-            }
-                
         }
     }
 }
