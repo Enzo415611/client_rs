@@ -1,9 +1,14 @@
 import { LoaderS, Logic, InstanceS } from "logic.slint";
-import { ComboBox, Button, TextEdit, HorizontalBox, LineEdit, VerticalBox } from "std-widgets.slint";
+import {
+    ComboBox,
+    Button,
+    TextEdit,
+    HorizontalBox,
+    LineEdit,
+    VerticalBox,
+} from "std-widgets.slint";
 
-export struct MinecraftVersion {
-    
-}
+export struct MinecraftVersion {}
 
 export component CreateInstance {
     in-out property <InstanceS> instance;
@@ -22,7 +27,6 @@ export component CreateInstance {
         "1.21.1",
         "1.21"
     ];
-
 
     function loader-to-string(loader: LoaderS) -> string {
         if loader == LoaderS.Vanilla {
@@ -62,7 +66,7 @@ export component CreateInstance {
 
     VerticalBox {
         alignment: LayoutAlignment.center;
-        
+
         LineEdit {
             height: 30px;
             placeholder-text: "Instance Name";
@@ -71,7 +75,7 @@ export component CreateInstance {
                 instance.name = text;
             }
         }
-        
+
         ComboBox {
             model: minecraft-versions;
             selected(current-value) => {
@@ -107,8 +111,7 @@ export component CreateInstance {
             text: "Create Instance";
             clicked => {
                 Logic.create-instance(instance);
-            } 
+            }
         }
-        
     }
 }

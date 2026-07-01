@@ -23,7 +23,7 @@ pub fn on_login_online_account(weak: Weak<AppWindow>, app_state: Arc<Mutex<AppSt
             if let Some(ui) = weak.upgrade() {
                 let logic = ui.global::<Logic>();
                 let accounts = &app_state.lock().accounts;
-
+                
                 match accounts
                     .iter()
                     .find(|user| user.username == account.name.to_string())
@@ -44,11 +44,11 @@ pub fn on_login_online_account(weak: Weak<AppWindow>, app_state: Arc<Mutex<AppSt
                                 let mut auth = auth::MicrosoftAuth::new("00000000402b5328");
                                 let event_bus = EventBus::new(1000);
                                 let mut rx = event_bus.subscribe();
-
-                                // auth.set_device_code_callback(|code, url| {
-                                //     println!("code: {}, url: {}", code, url)
-                                // });
-
+                                
+                                auth.set_device_code_callback(|code, url| {
+                                    println!("code: {}, url: {}", code, url)
+                                });
+                                println!("passou");
                                 if let Ok(user) = auth.authenticate(Some(&event_bus)).await {
                                     let mut accounts = vec![];
 
@@ -83,6 +83,7 @@ pub fn on_login_online_account(weak: Weak<AppWindow>, app_state: Arc<Mutex<AppSt
 }
 
 
+
 pub fn on_login_offline_account(weak: Weak<AppWindow>, app_state: Arc<Mutex<AppState>>) {
     if let Some(ui) = weak.upgrade() {
         let logic = ui.global::<Logic>();
@@ -90,8 +91,9 @@ pub fn on_login_offline_account(weak: Weak<AppWindow>, app_state: Arc<Mutex<AppS
         logic.on_login_offline_account(move |account| {
             let app_state = app_state.clone();
             let weak = weak.clone();
+            
             if let Some(ui) = weak.upgrade() {
-                let accounts = &app_state.lock().accounts;
+                let accounts = app_state.lock().accounts.clone();
                 let logic = ui.global::<Logic>();
                 match accounts
                     .iter()
@@ -113,6 +115,7 @@ pub fn on_login_offline_account(weak: Weak<AppWindow>, app_state: Arc<Mutex<AppS
         });
     }
 }
+
 
 pub fn on_create_offline_account(weak: Weak<AppWindow>, app_state: Arc<Mutex<AppState>>) {
     if let Some(ui) = weak.upgrade() {

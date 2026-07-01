@@ -5,7 +5,14 @@ import {
     HorizontalBox,
 } from "std-widgets.slint";
 import { SelectInstance } from "select-instance.slint";
-import { Logic, InstanceS, LoaderS, AccountSelectedS, Page, AccountS } from "logic.slint"; export { Logic, InstanceS, LoaderS, AccountSelectedS, AccountS }
+import {
+    Logic,
+    InstanceS,
+    LoaderS,
+    AccountSelectedS,
+    Page,
+    AccountS,
+} from "logic.slint"; export { Logic, InstanceS, LoaderS, AccountSelectedS, AccountS }
 import { CreateInstance } from "create-instance.slint";
 import { LoginPage } from "login.slint";
 import { TopBar } from "components/top-bar.slint";
@@ -25,8 +32,8 @@ export component AppWindow inherits Window {
             alignment: LayoutAlignment.center;
         }
 
-        if Logic.current-page == Page.CreateInstance: HorizontalBox {
-            SelectInstance { }
+        if Logic.current-page == Page.CreateInstance: HorizontalLayout {
+            if Logic.instances.length >= 1: SelectInstance { }
 
             CreateInstance { }
         }

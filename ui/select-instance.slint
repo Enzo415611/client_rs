@@ -4,16 +4,13 @@ import { Logic } from "logic.slint";
 import { CreateInstance } from "create-instance.slint";
 
 export component SelectInstance inherits VerticalLayout {
-    Rectangle {
-        background: #363636;
-        width: 200px;
-        ListView {
-            height: parent.height;
-            for instance in Logic.instances : VerticalLayout {
-                padding: 4px;
-                SelectInstanceButton {
-                    instance: instance;
-                }
+    ListView {
+        height: 100%;
+        width: 150px;
+        for instance in Logic.instances: VerticalLayout {
+            padding: 4px;
+            SelectInstanceButton {
+                instance: instance;
             }
         }
     }
