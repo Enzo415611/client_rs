@@ -3,7 +3,7 @@ use std::sync::Arc;
 use lighty_launcher::{
     Authenticator,
     auth::{self},
-    event::EventBus,
+    event::{EventBus, EventReceiver},
 };
 use parking_lot::Mutex;
 use slint::{ComponentHandle, Model, ModelRc, SharedString, ToSharedString, VecModel, Weak};
@@ -23,7 +23,7 @@ pub fn on_login_online_account(weak: Weak<AppWindow>, app_state: Arc<Mutex<AppSt
             if let Some(ui) = weak.upgrade() {
                 let logic = ui.global::<Logic>();
                 let accounts = &app_state.lock().accounts;
-                
+
                 match accounts
                     .iter()
                     .find(|user| user.username == account.name.to_string())
@@ -44,7 +44,7 @@ pub fn on_login_online_account(weak: Weak<AppWindow>, app_state: Arc<Mutex<AppSt
                                 let mut auth = auth::MicrosoftAuth::new("00000000402b5328");
                                 let event_bus = EventBus::new(1000);
                                 let mut rx = event_bus.subscribe();
-                                
+
                                 auth.set_device_code_callback(|code, url| {
                                     println!("code: {}, url: {}", code, url)
                                 });
@@ -59,7 +59,9 @@ pub fn on_login_online_account(weak: Weak<AppWindow>, app_state: Arc<Mutex<AppSt
 
                                     logic.set_accounts(ModelRc::new(VecModel::from(accounts)));
                                     true
-                                } else {false}
+                                } else {
+                                    false
+                                }
 
                                 // match rx.next().await.expect("") {
                                 //     lighty_launcher::event::Event::Auth(auth) => match auth {
@@ -71,18 +73,20 @@ pub fn on_login_online_account(weak: Weak<AppWindow>, app_state: Arc<Mutex<AppSt
                                 //     }
                                 //     _ => {}
                                 // }
-                            } else {false}
+                            } else {
+                                false
+                            }
                         }))
                         .ok();
-                    false
+                        false
                     }
                 }
-            } else {false}
+            } else {
+                false
+            }
         });
     }
 }
-
-
 
 pub fn on_login_offline_account(weak: Weak<AppWindow>, app_state: Arc<Mutex<AppState>>) {
     if let Some(ui) = weak.upgrade() {
@@ -91,7 +95,7 @@ pub fn on_login_offline_account(weak: Weak<AppWindow>, app_state: Arc<Mutex<AppS
         logic.on_login_offline_account(move |account| {
             let app_state = app_state.clone();
             let weak = weak.clone();
-            
+
             if let Some(ui) = weak.upgrade() {
                 let accounts = app_state.lock().accounts.clone();
                 let logic = ui.global::<Logic>();
@@ -116,11 +120,9 @@ pub fn on_login_offline_account(weak: Weak<AppWindow>, app_state: Arc<Mutex<AppS
     }
 }
 
-
 pub fn on_create_offline_account(weak: Weak<AppWindow>, app_state: Arc<Mutex<AppState>>) {
     if let Some(ui) = weak.upgrade() {
         let logic = ui.global::<Logic>();
-
         logic.on_create_offline_account(move |account| {
             let weak = weak.clone();
             let app_state = app_state.clone();
@@ -137,11 +139,9 @@ pub fn on_create_offline_account(weak: Weak<AppWindow>, app_state: Arc<Mutex<App
                 slint::spawn_local(async_compat::Compat::new(async move {
                     if let Some(ui) = weak.upgrade() {
                         let logic = ui.global::<Logic>();
-                        let event_bus = EventBus::new(1000);
-                        let mut rx = event_bus.subscribe();
                         let mut auth = auth::OfflineAuth::new(account.name.to_string());
-
-                        if let Ok(user) = auth.authenticate(Some(&event_bus)).await {
+                        let rx = &app_state.lock().event_bus.clone();
+                        if let Ok(user) = auth.authenticate(Some(rx)).await {
                             // add new account
                             app_state.lock().accounts.push(user);
                             let mut accounts_for_ui = vec![];
@@ -162,16 +162,6 @@ pub fn on_create_offline_account(weak: Weak<AppWindow>, app_state: Arc<Mutex<App
                             });
 
                             logic.set_accounts(ModelRc::new(VecModel::from(accounts_for_ui)));
-                        }
-
-                        match rx.next().await.expect("") {
-                            lighty_launcher::event::Event::Auth(event) => match event {
-                                _ => println!("{:?}", event),
-                            },
-                            lighty_launcher::event::Event::ConsoleOutput(out) => {
-                                println!("{:?}", out.line);
-                            }
-                            _ => {}
                         }
                     }
                 }))

@@ -1,6 +1,8 @@
 use std::{env::consts::OS, path::PathBuf, sync::Arc};
 
-use lighty_launcher::{Launch, Loader, VersionBuilder, version};
+use lighty_launcher::{
+    Launch, Loader, VersionBuilder, event::EventReceiver, loaders::VersionInfo, version,
+};
 use parking_lot::Mutex;
 use slint::{ComponentHandle, ModelRc, SharedString, VecModel, Weak};
 
@@ -34,11 +36,10 @@ pub fn on_create_instance(weak: Weak<AppWindow>, app_state: Arc<Mutex<AppState>>
                 is_run: false,
             };
 
-            _=create_instance(weak.clone(), app_state.clone(), new_instance);
+            _ = create_instance(weak.clone(), app_state.clone(), new_instance);
         });
     }
 }
-
 
 pub fn create_instance(
     weak: Weak<AppWindow>,
@@ -77,26 +78,6 @@ pub fn create_instance(
     Ok(())
 }
 
-pub fn get_minecraft_dir() -> PathBuf {
-    match OS {
-        "windows" => {
-            if let Some(dir) = dirs::config_dir() {
-                return dir.join(".minecraft");
-            }
-            PathBuf::new()
-        }
-        "macos" => PathBuf::new(),
-        "linux" => {
-            if let Some(dir) = dirs::data_dir() {
-                return dir.join(".minecraft");
-            }
-            PathBuf::new()
-        }
-        _ => PathBuf::new(),
-    }
-}
-
-
 fn get_instance_by_name(app_state: Arc<Mutex<AppState>>, name: &str) -> Option<Instance> {
     app_state
         .lock()
@@ -106,12 +87,15 @@ fn get_instance_by_name(app_state: Arc<Mutex<AppState>>, name: &str) -> Option<I
         .cloned()
 }
 
-fn on_run_instance(weak: Weak<AppWindow>, app_state: Arc<Mutex<AppState>>) {
+pub fn on_run_instance(weak: Weak<AppWindow>, app_state: Arc<Mutex<AppState>>) {
     if let Some(ui) = weak.upgrade() {
         let logic = ui.global::<Logic>();
-
         logic.on_run_instance(move |name| {
+            println!("run");
+
             if let Some(mut instance) = get_instance_by_name(app_state.clone(), &name) {
+                println!("{:?}", instance.version_builder.game_dirs);
+
                 let app_state = app_state.clone();
                 slint::spawn_local(async_compat::Compat::new(async move {
                     if let Some(user) = &app_state.lock().current_account {
@@ -121,6 +105,35 @@ fn on_run_instance(weak: Weak<AppWindow>, app_state: Arc<Mutex<AppState>>) {
                             .run()
                             .await;
                     }
+
+                    // match app_state.lock().rx.next().await.unwrap() {
+                    //     lighty_launcher::event::Event::Launch(event) => match event {
+                    //         lighty_launcher::event::LaunchEvent::ProcessOutput {
+                    //             pid,
+                    //             stream,
+                    //             line,
+                    //         } => {
+                    //             println!("ProcessOutput: stram: {}, line: {}", stream, line);
+                    //         }
+                    //         lighty_launcher::event::LaunchEvent::InstallCompleted {
+                    //             version,
+                    //             total_bytes,
+                    //         } => {
+                    //             println!("InstallCompleted: {}", total_bytes)
+                    //         }
+                    //         lighty_launcher::event::LaunchEvent::InstallProgress { bytes } => {
+                    //             println!("{}", bytes);
+                    //         }
+                    //         lighty_launcher::event::LaunchEvent::Launched { version, pid } => {
+                    //             println!("Launched: {}", pid)
+                    //         }
+                    //         lighty_launcher::event::LaunchEvent::NotLaunched { version, error } => {
+                    //             println!("NotLaunched: {}", error);
+                    //         }
+                    //         _ => {}
+                    //     },
+                    //     _ => {}
+                    // }
                 }))
                 .ok();
             }

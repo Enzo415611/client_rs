@@ -6,18 +6,14 @@ mod instance;
 use std::{error::Error, sync::Arc};
 
 use dotenvy::dotenv;
-use lighty_launcher::{
-    Loader, UserProfile, VersionBuilder,
-    auth::{MicrosoftAuth, OfflineAuth},
-    launch::InstanceControl,
-};
+use lighty_launcher::{UserProfile, event::{EventBus, EventReceiver}};
 
 use parking_lot::Mutex;
 use slint::Weak;
 
 use crate::{
     auth::{on_create_offline_account, on_login_offline_account, on_login_online_account},
-    instance::{Instance, on_create_instance},
+    instance::{Instance, on_create_instance, on_run_instance},
 };
 
 slint::include_modules!();
@@ -28,16 +24,22 @@ struct AppState {
     accounts_for_slint: Vec<String>,
     instances: Vec<Instance>,
     instances_for_slint: Vec<InstanceS>,
+    event_bus: EventBus,
+    rx: EventReceiver,
 }
 
 impl AppState {
     fn new() -> Self {
+        let event_bus = EventBus::new(1000);
+        let rx = event_bus.subscribe();
         Self {
             current_account: None,
             accounts: vec![],
             accounts_for_slint: vec![],
             instances: vec![],
             instances_for_slint: vec![],
+            event_bus,
+            rx
         }
     }
 }
@@ -56,6 +58,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 fn slint_callbacks(weak: Weak<AppWindow>, app_state: Arc<Mutex<AppState>>) {
+    on_run_instance(weak.clone(), app_state.clone());
     on_create_instance(weak.clone(), app_state.clone());
     on_login_online_account(weak.clone(), app_state.clone());
     on_create_offline_account(weak.clone(), app_state.clone());
